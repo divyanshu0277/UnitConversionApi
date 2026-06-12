@@ -1,0 +1,39 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/
+*.userprefs
+
+## Build output
+artifacts/
+publish/
+
+## Test results
+TestResults/
+*.coverage
+coverage-report/
+
+## NuGet
+*.nupkg
+packages/
+!**/packages/repositories.config
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Rider / JetBrains
+.idea/
+*.sln.iml
+
+## Visual Studio Code
+.vscode/
+!.vscode/extensions.json
+
+## Environment / secrets
+.env
+*.env
+appsettings.*.local.json

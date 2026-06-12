@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unit Converter</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f5f3;
+      --surface: #ffffff;
+      --surface2: #f0efeb;
+      --border: rgba(0,0,0,0.1);
+      --border2: rgba(0,0,0,0.18);
+      --text: #1a1a18;
+      --muted: #6b6b67;
+      --hint: #9e9e9a;
+      --accent: #2563eb;
+      --accent-bg: #eff6ff;
+      --accent-text: #1d4ed8;
+      --danger-bg: #fef2f2;
+      --danger-text: #b91c1c;
+      --danger-border: rgba(185,28,28,0.2);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --radius-pill: 999px;
+    }
+
+    [data-theme="dark"] {
+      --bg: #15161a;
+      --surface: #1e2025;
+      --surface2: #262830;
+      --border: rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.16);
+      --text: #f0f0ee;
+      --muted: #9a9a98;
+      --hint: #75757a;
+      --accent: #3b82f6;
+      --accent-bg: rgba(59,130,246,0.12);
+      --accent-text: #60a5fa;
+      --danger-bg: rgba(185,28,28,0.12);
+      --danger-text: #f87171;
+      --danger-border: rgba(248,113,113,0.25);
+    }
+
+    body { transition: background 0.2s, color 0.2s; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Nav ── */
+    nav {
+      background: var(--surface);
+      border-bottom: 0.5px solid var(--border);
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-brand .logo {
+      width: 30px; height: 30px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-size: 16px;
+    }
+    .nav-link {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+      border: 0.5px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .nav-link:hover { background: var(--surface2); }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 3rem 1rem 2rem;
+    }
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 40px);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+    .hero p {
+      font-size: 16px;
+      color: var(--muted);
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    /* ── Main layout ── */
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 1rem 4rem;
+    }
+
+    /* ── Category pills ── */
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+    .pill {
+      padding: 6px 16px;
+      border-radius: var(--radius-pill);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 0.5px solid var(--border2);
+      background: var(--surface);
+      color: var(--muted);
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pill:hover { background: var(--surface2); color: var(--text); }
+    .pill.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .pill .icon { font-size: 15px; }
+
+    /* ── Converter card ── */
+    .card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .converter-grid {
+      display: grid;
+      grid-template-columns: 1fr 36px 1fr;
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 1rem;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--hint);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    input[type="number"], select {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    input[type="number"]:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+    input.output {
+      background: var(--surface2);
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--accent-text);
+    }
+
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+      content: "▾";
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--hint);
+      font-size: 12px;
+    }
+    .select-wrap select { padding-right: 28px; }
+
+    .swap-wrap {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 2px;
+    }
+    .swap-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 0.5px solid var(--border2);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .swap-btn:hover { background: var(--surface2); color: var(--text); transform: rotate(180deg); }
+
+    .unit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+
+    .convert-btn {
+      width: 100%;
+      height: 46px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .convert-btn:hover { opacity: 0.9; }
+    .convert-btn:active { transform: scale(0.99); }
+
+    /* ── Result banner ── */
+    .result-banner {
+      background: var(--accent-bg);
+      border: 0.5px solid rgba(37,99,235,0.2);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-top: 1rem;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .result-banner.visible { display: flex; }
+    .result-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .result-eq {
+      font-size: 15px;
+      color: var(--accent-text);
+      font-weight: 500;
+    }
+    .result-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .copy-btn {
+      width: 30px; height: 30px;
+      border-radius: var(--radius-sm);
+      border: 0.5px solid var(--border2);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 14px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .copy-btn:hover { background: var(--surface2); color: var(--text); }
+    .copy-btn.copied { color: #16a34a; border-color: rgba(22,163,74,0.3); }
+    .result-formula {
+      font-size: 13px;
+      color: var(--muted);
+      font-family: "SF Mono", "Consolas", monospace;
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+    }
+    .result-badge {
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: var(--radius-pill);
+      background: rgba(37,99,235,0.12);
+      color: var(--accent-text);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* ── Theme toggle ── */
+    .theme-toggle {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      border: 0.5px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .theme-toggle:hover { background: var(--surface2); color: var(--text); }
+
+    /* ── Error ── */
+    .error-box {
+      background: var(--danger-bg);
+      border: 0.5px solid var(--danger-border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      color: var(--danger-text);
+      font-size: 14px;
+      margin-top: 1rem;
+      display: none;
+    }
+    .error-box.visible { display: block; }
+
+    /* ── History ── */
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--hint);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 0.5px solid var(--border);
+      font-size: 14px;
+      gap: 12px;
+    }
+    .history-item:last-child { border-bottom: none; }
+    .history-from { color: var(--muted); }
+    .history-arrow { color: var(--hint); }
+    .history-to { color: var(--text); font-weight: 600; }
+    .history-cat {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      background: var(--surface2);
+      color: var(--hint);
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      font-size: 13px;
+      color: var(--hint);
+      border-top: 0.5px solid var(--border);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 480px) {
+      nav { padding: 0 1rem; }
+      .hero { padding: 2rem 1rem 1.5rem; }
+      .converter-grid { grid-template-columns: 1fr 32px 1fr; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <a class="nav-brand" href="/">
+    <div class="logo">⇄</div>
+    Unit Converter
+  </a>
+  <div style="display:flex; align-items:center;">
+  <a class="nav-link" href="/swagger" target="_blank">API Docs ↗</a>
+  <button class="theme-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode" style="margin-left:8px;">🌙</button>
+  </div>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>Convert anything, instantly</h1>
+  <p>Length, temperature, weight, volume, speed — all in one place.</p>
+</div>
+
+<!-- Main -->
+<div class="container">
+
+  <!-- Category pills -->
+  <div class="pills" id="pills"></div>
+
+  <!-- Converter card -->
+  <div class="card">
+    <div class="converter-grid">
+      <div class="field">
+        <label>Value</label>
+        <input type="number" id="inputVal" value="1" step="any" placeholder="Enter value" />
+      </div>
+      <div class="swap-wrap">
+        <button class="swap-btn" id="swapBtn" title="Swap units" aria-label="Swap units">⇄</button>
+      </div>
+      <div class="field">
+        <label>Result</label>
+        <input type="number" id="outputVal" class="output" readonly placeholder="—" />
+      </div>
+    </div>
+
+    <div class="unit-grid">
+      <div class="field">
+        <label>From</label>
+        <div class="select-wrap">
+          <select id="fromUnit"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>To</label>
+        <div class="select-wrap">
+          <select id="toUnit"></select>
+        </div>
+      </div>
+    </div>
+
+    <button class="convert-btn" id="convertBtn">Convert</button>
+
+    <div class="result-banner" id="resultBanner">
+      <div class="result-top">
+        <span class="result-eq" id="resultEq"></span>
+        <div class="result-actions">
+          <span class="result-badge" id="resultCat"></span>
+          <button class="copy-btn" id="copyBtn" title="Copy result" aria-label="Copy result">📋</button>
+        </div>
+      </div>
+      <div class="result-formula" id="resultFormula"></div>
+    </div>
+
+    <div class="error-box" id="errorBox"></div>
+  </div>
+
+  <!-- History -->
+  <div class="card" id="historyCard" style="display:none;">
+    <div class="section-title">Recent conversions</div>
+    <div id="historyList"></div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<footer>
+  Built with ASP.NET Core 9 &nbsp;·&nbsp;
+  <a href="/swagger">Swagger UI</a> &nbsp;·&nbsp;
+  <a href="/api/v1/categories">API</a>
+</footer>
+
+<script>
+const UNITS = {
+  Length: {
+    icon: "📏",
+    units: {
+      meters: "Meters", kilometers: "Kilometers", centimeters: "Centimeters",
+      millimeters: "Millimeters", miles: "Miles", yards: "Yards",
+      feet: "Feet", inches: "Inches", "nautical-miles": "Nautical Miles"
+    }
+  },
+  Temperature: {
+    icon: "🌡️",
+    units: { celsius: "Celsius", fahrenheit: "Fahrenheit", kelvin: "Kelvin", rankine: "Rankine" }
+  },
+  Weight: {
+    icon: "⚖️",
+    units: {
+      kilograms: "Kilograms", grams: "Grams", milligrams: "Milligrams",
+      pounds: "Pounds", ounces: "Ounces", "metric-tons": "Metric Tons",
+      "short-tons": "Short Tons", stone: "Stone"
+    }
+  },
+  Volume: {
+    icon: "🧪",
+    units: {
+      liters: "Liters", milliliters: "Milliliters", "cubic-meters": "Cubic Meters",
+      "gallons-us": "Gallons (US)", "gallons-uk": "Gallons (UK)",
+      "fluid-ounces": "Fluid Ounces", cups: "Cups", pints: "Pints", quarts: "Quarts"
+    }
+  },
+  Speed: {
+    icon: "💨",
+    units: {
+      "meters-per-second": "Meters/sec", "kilometers-per-hour": "km/h",
+      "miles-per-hour": "mph", knots: "Knots", "feet-per-second": "Feet/sec"
+    }
+  }
+};
+
+// Base-unit factors (value in unit = value_in_base / factor for ToBase=v*factor units)
+const FACTORS = {
+  Length: { meters:1, kilometers:1000, centimeters:0.01, millimeters:0.001, miles:1609.344, yards:0.9144, feet:0.3048, inches:0.0254, "nautical-miles":1852 },
+  Weight: { kilograms:1, grams:0.001, milligrams:0.000001, pounds:0.45359237, ounces:0.028349523125, "metric-tons":1000, "short-tons":907.18474, stone:6.35029318 },
+  Volume: { liters:1, milliliters:0.001, "cubic-meters":1000, "gallons-us":3.785411784, "gallons-uk":4.54609, "fluid-ounces":0.0295735296, cups:0.2365882365, pints:0.473176473, quarts:0.946352946 },
+  Speed: { "meters-per-second":1, "kilometers-per-hour":1/3.6, "miles-per-hour":0.44704, knots:0.514444, "feet-per-second":0.3048 }
+};
+
+const UNIT_SYMBOLS = {
+  meters:"m", kilometers:"km", centimeters:"cm", millimeters:"mm", miles:"mi", yards:"yd", feet:"ft", inches:"in", "nautical-miles":"nmi",
+  celsius:"°C", fahrenheit:"°F", kelvin:"K", rankine:"°R",
+  kilograms:"kg", grams:"g", milligrams:"mg", pounds:"lb", ounces:"oz", "metric-tons":"t", "short-tons":"ton", stone:"st",
+  liters:"L", milliliters:"mL", "cubic-meters":"m³", "gallons-us":"gal", "gallons-uk":"gal(UK)", "fluid-ounces":"fl oz", cups:"cup", pints:"pt", quarts:"qt",
+  "meters-per-second":"m/s", "kilometers-per-hour":"km/h", "miles-per-hour":"mph", knots:"kn", "feet-per-second":"ft/s"
+};
+
+function fmtCoef(n) {
+  if (Math.abs(n - Math.round(n)) < 1e-9) return Math.round(n).toString();
+  return parseFloat(n.toFixed(10)).toString();
+}
+
+function buildFormula(category, from, to, value, out) {
+  const fSym = UNIT_SYMBOLS[from] || from;
+  const tSym = UNIT_SYMBOLS[to] || to;
+  const v = fmtNum(value), o = fmtNum(out);
+
+  if (category === "Temperature") {
+    const formulas = {
+      "celsius->fahrenheit": `${v}°C × 9/5 + 32 = ${o}°F`,
+      "fahrenheit->celsius": `(${v}°F − 32) × 5/9 = ${o}°C`,
+      "celsius->kelvin": `${v}°C + 273.15 = ${o}K`,
+      "kelvin->celsius": `${v}K − 273.15 = ${o}°C`,
+      "fahrenheit->kelvin": `(${v}°F − 32) × 5/9 + 273.15 = ${o}K`,
+      "kelvin->fahrenheit": `(${v}K − 273.15) × 9/5 + 32 = ${o}°F`,
+      "celsius->rankine": `(${v}°C + 273.15) × 9/5 = ${o}°R`,
+      "rankine->celsius": `(${v}°R − 491.67) × 5/9 = ${o}°C`,
+      "fahrenheit->rankine": `${v}°F + 459.67 = ${o}°R`,
+      "rankine->fahrenheit": `${v}°R − 459.67 = ${o}°F`,
+      "kelvin->rankine": `${v}K × 9/5 = ${o}°R`,
+      "rankine->kelvin": `${v}°R × 5/9 = ${o}K`,
+    };
+    if (from === to) return `${v}${fSym} = ${o}${tSym}`;
+    return formulas[`${from}->${to}`] || `${v}${fSym} = ${o}${tSym}`;
+  }
+
+  const table = FACTORS[category];
+  if (table && from !== to) {
+    const factorFrom = table[from], factorTo = table[to];
+    const ratio = factorFrom / factorTo;
+    return `${v} ${fSym} × ${fmtCoef(ratio)} = ${o} ${tSym}`;
+  }
+  return `${v} ${fSym} = ${o} ${tSym}`;
+}
+
+let lastResultText = "";
+
+let currentCategory = "Length";
+let history = [];
+
+
+const pillsEl    = document.getElementById("pills");
+const fromSel    = document.getElementById("fromUnit");
+const toSel      = document.getElementById("toUnit");
+const inputVal   = document.getElementById("inputVal");
+const outputVal  = document.getElementById("outputVal");
+const convertBtn = document.getElementById("convertBtn");
+const swapBtn    = document.getElementById("swapBtn");
+const errorBox   = document.getElementById("errorBox");
+const resultBanner = document.getElementById("resultBanner");
+const resultEq   = document.getElementById("resultEq");
+const resultCat  = document.getElementById("resultCat");
+const historyCard = document.getElementById("historyCard");
+const historyList = document.getElementById("historyList");
+const copyBtn    = document.getElementById("copyBtn");
+const resultFormula = document.getElementById("resultFormula");
+const themeToggle = document.getElementById("themeToggle");
+
+function buildPills() {
+  pillsEl.innerHTML = "";
+  Object.keys(UNITS).forEach(cat => {
+    const btn = document.createElement("button");
+    btn.className = "pill" + (cat === currentCategory ? " active" : "");
+    btn.innerHTML = `<span class="icon">${UNITS[cat].icon}</span>${cat}`;
+    btn.onclick = () => {
+      currentCategory = cat;
+      buildPills();
+      buildSelects();
+      outputVal.value = "";
+      resultBanner.classList.remove("visible");
+      hideError();
+    };
+    pillsEl.appendChild(btn);
+  });
+}
+
+function buildSelects() {
+  const cats = UNITS[currentCategory].units;
+  const keys = Object.keys(cats);
+  [fromSel, toSel].forEach((sel, i) => {
+    sel.innerHTML = "";
+    keys.forEach(k => {
+      const o = document.createElement("option");
+      o.value = k; o.textContent = cats[k];
+      sel.appendChild(o);
+    });
+    sel.selectedIndex = i === 1 ? Math.min(1, keys.length - 1) : 0;
+  });
+}
+
+function hideError() { errorBox.classList.remove("visible"); }
+
+function fmtNum(n) {
+  const abs = Math.abs(n);
+  if (abs === 0) return "0";
+  if (abs >= 0.001 && abs < 1e10) {
+    const s = parseFloat(n.toFixed(8)).toString();
+    return s;
+  }
+  return n.toExponential(4);
+}
+
+async function doConvert() {
+  hideError();
+  resultBanner.classList.remove("visible");
+
+  const value = parseFloat(inputVal.value);
+  if (isNaN(value)) { showError("Please enter a valid number."); return; }
+
+  convertBtn.textContent = "Converting…";
+  convertBtn.disabled = true;
+
+  try {
+    const res = await fetch("/api/v1/convert", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ value, fromUnit: fromSel.value, toUnit: toSel.value })
+    });
+    const data = await res.json();
+
+    if (!res.ok) { showError(data.message || "Conversion failed."); return; }
+
+    const out = data.outputValue;
+    outputVal.value = fmtNum(out);
+
+    const fromName = UNITS[currentCategory].units[fromSel.value];
+    const toName   = UNITS[currentCategory].units[toSel.value];
+
+    resultEq.textContent = `${fmtNum(value)} ${fromName} = ${fmtNum(out)} ${toName}`;
+    resultCat.textContent = data.category;
+    resultFormula.textContent = buildFormula(data.category, fromSel.value, toSel.value, value, out);
+    lastResultText = `${fmtNum(value)} ${fromName} = ${fmtNum(out)} ${toName}`;
+    copyBtn.classList.remove("copied");
+    copyBtn.textContent = "📋";
+    resultBanner.classList.add("visible");
+
+    addHistory(value, fromName, out, toName, data.category);
+
+  } catch (e) {
+    showError("Cannot reach API. Make sure the server is running.");
+  } finally {
+    convertBtn.textContent = "Convert";
+    convertBtn.disabled = false;
+  }
+}
+
+function showError(msg) {
+  errorBox.textContent = "⚠ " + msg;
+  errorBox.classList.add("visible");
+  outputVal.value = "";
+}
+
+function addHistory(inVal, fromName, outVal, toName, cat) {
+  history.unshift({ inVal, fromName, outVal, toName, cat });
+  if (history.length > 6) history.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  if (!history.length) { historyCard.style.display = "none"; return; }
+  historyCard.style.display = "block";
+  historyList.innerHTML = history.map(h => `
+    <div class="history-item">
+      <span class="history-from">${fmtNum(h.inVal)} ${h.fromName}</span>
+      <span class="history-arrow">→</span>
+      <span class="history-to">${fmtNum(h.outVal)} ${h.toName}</span>
+      <span class="history-cat">${h.cat}</span>
+    </div>
+  `).join("");
+}
+
+swapBtn.onclick = () => {
+  const tmp = fromSel.value;
+  fromSel.value = toSel.value;
+  toSel.value = tmp;
+  if (outputVal.value) { inputVal.value = outputVal.value; outputVal.value = ""; }
+  resultBanner.classList.remove("visible");
+};
+
+convertBtn.onclick = doConvert;
+inputVal.addEventListener("keydown", e => { if (e.key === "Enter") doConvert(); });
+fromSel.addEventListener("change", () => { outputVal.value = ""; resultBanner.classList.remove("visible"); });
+toSel.addEventListener("change", () => { outputVal.value = ""; resultBanner.classList.remove("visible"); });
+
+copyBtn.onclick = async () => {
+  if (!lastResultText) return;
+  try {
+    await navigator.clipboard.writeText(lastResultText);
+    copyBtn.textContent = "✓";
+    copyBtn.classList.add("copied");
+    setTimeout(() => { copyBtn.textContent = "📋"; copyBtn.classList.remove("copied"); }, 1500);
+  } catch (e) {
+    copyBtn.textContent = "✗";
+    setTimeout(() => { copyBtn.textContent = "📋"; }, 1500);
+  }
+};
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  themeToggle.textContent = theme === "dark" ? "☀️" : "🌙";
+  localStorage.setItem("theme", theme);
+}
+
+themeToggle.onclick = () => {
+  const current = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+  applyTheme(current === "dark" ? "light" : "dark");
+};
+
+applyTheme(localStorage.getItem("theme") === "dark" ? "dark" : "light");
+
+
+buildPills();
+buildSelects();
+</script>
+</body>
+</html>
